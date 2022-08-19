@@ -41,7 +41,8 @@ yearly
 ```{r}
 # P = a/N  "P" la proporción, "a" el número de veces que se ha presentado la variable de interés, y "N" el número de datos del total de la muestra.
 
-yearly <- mutate(yearly, proportion_deaths = deaths/births)
+yearly %>%
+  mutate(proportion_deaths = deaths/births)
 ```
 
 2.2
@@ -56,9 +57,80 @@ yearly
 3.1, 3.2
 
 ```{r}
+install.packages("ggplot2")
+
 library(ggplot2)
-ggplot(data = yearly) + geom_line(mapping = aes(x = year, y = proportion_deaths))
+
+ggplot(yearly, aes(x = proportion_deaths, y = year, color=clinic)) +
+  geom_line() +
+  scale_x_log10()
 
 ```
+
+--- 4) Comienza el lavado de manos
+
+4.1
+
+```{r}
+# Generando la ruta del archivo
+ruta2csv <- "C:\\Users\\verov\\OneDrive\\Escritorio\\Pablo\\MAESTRÍA EN INGENIERÍA PARA LA INDUSTRIA CON ESPECIALIDAD EN CIENCIAS DE LA COMPUTACIÓN\\Primer Trimestre 2022\\Fundamentos de Programacion Scripting\\proyecto\\deaths_clinic_1.csv"
+
+# Lectura de un archivo csv donde su contenido esta separado por "," y poseen un titulo cada columna
+monthly <- read_csv(ruta2csv)
+
+```
+
+4.2
+
+```{r}
+monthly <- monthly %>%
+  mutate(proportion_deaths = deaths/births)
+```
+
+4.3
+
+```{r}
+monthly
+head(monthly)
+```
+
+--- 5) El efecto del lavado de manos
+
+5.1
+
+```{r}
+ggplot(monthly, aes(x =  proportion_deaths, y = date)) +
+  geom_line()
+
+```
+5.2
+
+```{r}
+p <- ggplot(monthly, aes(x =  proportion_deaths, y = date)) +
+  geom_line()
+
+p + xlab("Proporcion de muertes")
+p + ylab("Fechas")
+```
+5.3
+
+```{r}
+death_by_year <- monthly %>%
+  group_by(date) %>%
+  summarize(death_year = median(deaths))
+
+```
+
+5.4
+
+```{r}
+ggplot(death_by_year, aes(x = date, y = death_year)) +
+  geom_col()
+```
+--- 6) Los resultados del lavado de manos
+
+
+
+
 
 
