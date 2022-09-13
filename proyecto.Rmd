@@ -16,16 +16,18 @@ library(tidyverse)
 1.2
 
 ```{r}
-# El paquete readr nos permite importar archivos csv
+# El paquete readr puede utilizarce para importar archivos csv
 install.packages("readr")
 ```
 ```{r}
 library(readr)
-# Generando la ruta del archivo
-rutacsv <- "C:\\Users\\verov\\OneDrive\\Escritorio\\Pablo\\MAESTRÍA EN INGENIERÍA PARA LA INDUSTRIA CON ESPECIALIDAD EN CIENCIAS DE LA COMPUTACIÓN\\Primer Trimestre 2022\\Fundamentos de Programacion Scripting\\proyecto\\deaths_handwashing.csv"
+library("dplyr")
+# Una forma es generando la ruta del archivo
+# rutacsv <- "C:\\Users\\verov\\OneDrive\\Escritorio\\Pablo\\MAESTRÍA EN INGENIERÍA PARA LA INDUSTRIA CON ESPECIALIDAD EN CIENCIAS DE LA COMPUTACIÓN\\Primer Trimestre 2022\\Fundamentos de Programacion Scripting\\proyecto\\deaths_handwashing.csv"
 
 # Lectura de un archivo csv donde su contenido esta separado por "," y poseen un titulo cada columna
-yearly <- read_csv(rutacsv)
+yearly <- read.csv('deaths_handwashing.csv')
+# yearly <- read_csv(rutacsv)
 # Otra forma de estraer la informacion del archivo csv
 # yearly <- read.csv(rutacsv, header= TRUE, sep = ",")
 ```
@@ -41,7 +43,7 @@ yearly
 ```{r}
 # P = a/N  "P" la proporción, "a" el número de veces que se ha presentado la variable de interés, y "N" el número de datos del total de la muestra.
 
-yearly %>%
+yearly <- yearly %>%
   mutate(proportion_deaths = deaths/births)
 ```
 
@@ -57,13 +59,13 @@ yearly
 3.1, 3.2
 
 ```{r}
+# Instalando librería para gráficos
 install.packages("ggplot2")
 
 library(ggplot2)
 
-ggplot(yearly, aes(x = proportion_deaths, y = year, color=clinic)) +
-  geom_line() +
-  scale_x_log10()
+ggplot(yearly, aes(x = year, y = proportion_deaths, color=clinic)) +
+  geom_line()
 
 ```
 
@@ -72,11 +74,10 @@ ggplot(yearly, aes(x = proportion_deaths, y = year, color=clinic)) +
 4.1
 
 ```{r}
-# Generando la ruta del archivo
-ruta2csv <- "C:\\Users\\verov\\OneDrive\\Escritorio\\Pablo\\MAESTRÍA EN INGENIERÍA PARA LA INDUSTRIA CON ESPECIALIDAD EN CIENCIAS DE LA COMPUTACIÓN\\Primer Trimestre 2022\\Fundamentos de Programacion Scripting\\proyecto\\deaths_clinic_1.csv"
-
 # Lectura de un archivo csv donde su contenido esta separado por "," y poseen un titulo cada columna
-monthly <- read_csv(ruta2csv)
+monthly <- read.csv('deaths_clinic_1.csv')
+
+monthly
 
 ```
 
@@ -85,12 +86,16 @@ monthly <- read_csv(ruta2csv)
 ```{r}
 monthly <- monthly %>%
   mutate(proportion_deaths = deaths/births)
+
+monthly
+
 ```
 
 4.3
 
 ```{r}
 monthly
+# Imprimiendo las primeras filas del dataset monthly
 head(monthly)
 ```
 
@@ -99,34 +104,54 @@ head(monthly)
 5.1
 
 ```{r}
-ggplot(monthly, aes(x =  proportion_deaths, y = date)) +
+# Revisando la estructura del dataset monthly
+
+str(monthly)
+
+# Se utiliza la función as.Date() para convertir datos de caracteres en fechas
+ggplot(monthly, aes(x= as.Date(date), y=proportion_deaths)) +
   geom_line()
+
+# Puede especificarse un tipo de formato para la fecha
+# ggplot(monthly, aes(x= as.Date(date, format = "%Y-%m-%d"), y=proportion_deaths)) +
+#  geom_line()
 
 ```
 5.2
 
 ```{r}
-p <- ggplot(monthly, aes(x =  proportion_deaths, y = date)) +
-  geom_line()
+ggplot(monthly, aes(x= as.Date(date), y=proportion_deaths)) +
+  geom_line() +
+  xlab("Fechas") +
+  ylab("Proporción de muertes") +
+  labs(title = "El efecto del lavado de manos")
+#  theme_classic()
 
-p + xlab("Proporcion de muertes")
-p + ylab("Fechas")
 ```
 5.3
 
 ```{r}
+#death_by_year <- monthly %>%
+#  group_by(as.Date(date, format = "%Y")) %>%
+#  summarize(death_year = mean(deaths))
+
 death_by_year <- monthly %>%
-  group_by(date) %>%
+  group_by(date = as.Date(date, format = "%Y")) %>%
   summarize(death_year = mean(deaths))
 
+
 death_by_year
+
 ```
 
 5.4
 
 ```{r}
+str(death_by_year)
+
 ggplot(death_by_year, aes(x = date, y = death_year)) +
   geom_col()
+
 ```
 --- 6) Los resultados del lavado de manos
 
@@ -135,6 +160,7 @@ ggplot(death_by_year, aes(x = date, y = death_year)) +
 ```{r}
 monthly <- monthly %>%
   mutate(handwashing_started = date >= "1847-01-01")
+
 monthly
 
 ```
@@ -142,15 +168,19 @@ monthly
 6.2
 
 ```{r}
-ggplot(monthly, aes(x=date, y=proportion_deaths, color=handwashing_started)) +
+
+ggplot(monthly, aes(x=as.Date(date), y=proportion_deaths, color=handwashing_started)) +
   geom_line()
+
 ```
 6.3
 
 ```{r}
-ggplot(monthly, aes(x=date, y=proportion_deaths, color=handwashing_started)) +
+
+ggplot(monthly, aes(x=as.Date(date), y=proportion_deaths, color=handwashing_started)) +
   geom_line() +
   labs(title = "Los resultados del lavado de manos", y = "Proporción de muertos", x = "Fecha")
+
 ```
 --- 7) ¿Más lavado de manos, menos muertes?
 
@@ -167,11 +197,31 @@ month_summary
 
 ```{r}
 
-monthly %>%
-  group_by(handwashing_started) %>%
-  summarize(mean_proportion_deaths = mean(proportion_deaths))
-# t.test(mean_proportion_deaths, handwashing_started)
-# t.test(month_summary, conf.level = 0.95)
-  t.test(handwashing_started ~ group , data = month_summary)
+# Podemos crear un diagrama de caja para visualizar la distribución de cada grupo y ver si las puntuaciones medias entre los grupos son significativamente diferentes o no.
+boxplot(proportion_deaths ~ handwashing_started, data = monthly)
+
+```
+
+
+```{r}
+# t.test(outcome ~ group, data = df)
+# outcome = proportion_deaths
+# group = handwashing_started
+# df = monthly
+
+# t.test(outcome ~ group, data = df)
+t.test(proportion_deaths ~ handwashing_started, data = monthly)
+
+# La prueba t de Welch , o prueba t de varianzas desiguales , es una prueba de ubicación de dos muestras que se utiliza para probar la hipótesis nula de que dos poblaciones tienen medias iguales. Estas estadísticas se pueden usar con la distribución t para probar una de dos posibles hipótesis nulas :
+# 1. Que las dos medias poblacionales sean iguales, en lo que se aplica una prueba de dos colas
+# 2. Que una de las medias poblacionales es mayor o igual que la otra, en lo que se aplica una prueba de una cola.
+
+# t es el valor estadístico de la prueba t (t = 6.7105)
+# df son los grados de libertad (df= 84.198)
+# el valor p es el nivel de significancia de la prueba t (valor p = 2.114e-09)
+# el intervalo de confianza de las diferencias de medias es 95% 
+
+# Dado que el valor p es inferior a 0.05, podemos rechazar la hipótesis nula y decir que existe una diferencia estadísticamente significativa en las puntuaciones medias. Podemos cloncluir que se acepta la hipotesis alternativa que a partir del año 1847 la proporción de muertes se reduce drásticamente y, sí, fue entonces cuando se hizo obligatorio el lavado de manos.
+
 ```
 
